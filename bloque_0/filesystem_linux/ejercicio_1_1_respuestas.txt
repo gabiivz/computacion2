@@ -1,0 +1,58 @@
+1.1 
+gabivz@DESKTOP-1ETSCQ5:~$ ls -p /etc | grep -v / | wc -l
+82
+gabivz@DESKTOP-1ETSCQ5:~$ ls -l /etc/passwd
+-rw-r--r-- 1 root root 1426 Mar 17 14:15 /etc/passwd
+gabivz@DESKTOP-1ETSCQ5:~$ file /dev/null
+/dev/null: character special (1/3)
+gabivz@DESKTOP-1ETSCQ5:~$ ls -ld /bin
+lrwxrwxrwx 1 root root 7 Apr 22  2024 /bin -> usr/bin
+gabivz@DESKTOP-1ETSCQ5:~$ ls -i ~/.bashrc
+1236 /home/gabivz/.bashrc
+gabivz@DESKTOP-1ETSCQ5:~$ ls -ld /home
+drwxr-xr-x 3 root root 4096 Mar 17 14:15 /home
+
+1.2
+gabivz@DESKTOP-1ETSCQ5:~/computacion2$ echo 'echo "Hola desde el script"' > mi_script.sh
+gabivz@DESKTOP-1ETSCQ5:~/computacion2$ ./mi_script.sh
+-bash: ./mi_script.sh: Permission denied
+gabivz@DESKTOP-1ETSCQ5:~/computacion2$ ls -l mi_script.sh
+-rw-r--r-- 1 gabivz gabivz 28 Mar 29 22:57 mi_script.sh
+gabivz@DESKTOP-1ETSCQ5:~/computacion2$ chmod +x mi_script.sh
+gabivz@DESKTOP-1ETSCQ5:~/computacion2$ ./mi_script.sh
+Hola desde el script
+gabivz@DESKTOP-1ETSCQ5:~/computacion2$ ls -l mi_script.sh
+-rwxr-xr-x 1 gabivz gabivz 28 Mar 29 22:57 mi_script.sh
+No daba podia ejecutar el archivo ya que solo tenia perso de lectura y escritura
+
+¿Cuál es la diferencia entre chmod +x y chmod 755?
+el chmod +x agrega el permiso a lo que ya tenia en cambio el 755(octal) lo restablece.
+Si el archivo tiene permisos 644, ¿qué usuarios pueden leerlo? ¿Quiénes pueden escribirlo?
+Pueden leerlo todos(dueño,grupo,otros) y unicamente el dueño puede escribirlo.
+
+1.3
+gabivz@DESKTOP-1ETSCQ5:~/computacion2$ mkdir experimento_enlaces
+gabivz@DESKTOP-1ETSCQ5:~/computacion2$ cd experimento_enlaces
+gabivz@DESKTOP-1ETSCQ5:~/computacion2/experimento_enlaces$ echo "Este es el contenido original" > original.txt
+gabivz@DESKTOP-1ETSCQ5:~/computacion2/experimento_enlaces$ ln original.txt enlace_duro.txt
+gabivz@DESKTOP-1ETSCQ5:~/computacion2/experimento_enlaces$ ln -s original.txt enlace_simbolico.txt
+gabivz@DESKTOP-1ETSCQ5:~/computacion2/experimento_enlaces$ ls -li
+total 8
+50988 -rw-r--r-- 2 gabivz gabivz 30 Mar 29 23:18 enlace_duro.txt
+50989 lrwxrwxrwx 1 gabivz gabivz 12 Mar 29 23:19 enlace_simbolico.txt -> original.txt
+50988 -rw-r--r-- 2 gabivz gabivz 30 Mar 29 23:18 original.txt
+gabivz@DESKTOP-1ETSCQ5:~/computacion2/experimento_enlaces$ stat original.txt | grep Links
+Device: 8,48    Inode: 50988       Links: 2
+gabivz@DESKTOP-1ETSCQ5:~/computacion2/experimento_enlaces$ rm original.txt
+gabivz@DESKTOP-1ETSCQ5:~/computacion2/experimento_enlaces$ cat enlace_duro.txt
+Este es el contenido original
+gabivz@DESKTOP-1ETSCQ5:~/computacion2/experimento_enlaces$ cat enlace_simbolico.txt
+cat: enlace_simbolico.txt: No such file or directory
+gabivz@DESKTOP-1ETSCQ5:~/computacion2/experimento_enlaces$ ls -l
+total 4
+-rw-r--r-- 1 gabivz gabivz 30 Mar 29 23:18 enlace_duro.txt
+lrwxrwxrwx 1 gabivz gabivz 12 Mar 29 23:19 enlace_simbolico.txt -> original.txt
+
+2.1
+
+
