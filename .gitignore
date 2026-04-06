@@ -3,3 +3,15 @@ bloque_0/argparse/ejercicios/log.txt
 bloque_0/argparse/ejercicios/datos.json
 bloque_0/filesystem_linux/experimento_enlaces
 bloque_0/filesystem_linux/mi_script.sh
+# Python
+venv/
+__pycache__/
+*.pyc
+.env
+
+# IDEs
+.idea/
+.vscode/
+
+# OS
+.DS_Store
