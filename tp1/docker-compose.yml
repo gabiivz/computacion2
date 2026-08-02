@@ -1,0 +1,12 @@
+services:
+  monitor:
+    build: .
+    container_name: tp1_monitor
+    
+    stdin_open: true
+    tty: true
+    
+    volumes:
+      - .:/app
+      
+    pid: "host"

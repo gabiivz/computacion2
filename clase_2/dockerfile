@@ -1,0 +1,11 @@
+# Imagen base
+FROM python:3.11-slim
+
+# Configurar directorio de trabajo
+WORKDIR /app
+
+# Copiar código fuente
+COPY . .
+
+# Comando por defecto
+CMD ["python", "app.py"]

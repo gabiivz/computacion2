@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  # 1. El motor de caché
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+  # 2. El proceso en segundo plano
+  worker:
+    build: ./worker
+    depends_on:
+      - redis
+
+  # 3. La API en Flask
+  web:
+    build: ./web
+    ports:
+      - "5000:5000"
+    depends_on:
+      - redis

@@ -1,17 +1,13 @@
-bloque_0/argparse/script.py
-bloque_0/argparse/ejercicios/log.txt
-bloque_0/argparse/ejercicios/datos.json
-bloque_0/filesystem_linux/experimento_enlaces
-bloque_0/filesystem_linux/mi_script.sh
-# Python
-venv/
 __pycache__/
-*.pyc
-.env
+*.py[cod]
+*$py.class
 
-# IDEs
-.idea/
-.vscode/
+dump_*.json
 
-# OS
+venv/
+env/
+.venv/
+
+# Archivos de sistema operativo
 .DS_Store
+Thumbs.db

@@ -1,0 +1,33 @@
+¿Por qué imap_unordered puede ser más rápido que imap en la práctica?
+Porque imap_unordered devuelve (hace yield) el resultado de una tarea en el instante exacto en que el worker termina de procesarla. En cambio, imap está obligado a devolver los resultados en el mismo orden que el iterable original; si la primera tarea tarda mucho, imap bloquea la entrega de las demás (aunque ya estén listas) hasta que la primera termine.
+
+¿Cuándo conviene usar apply_async en lugar de map?
+Conviene usar apply_async cuando no estás procesando una lista homogénea de datos con una única función, sino cuando necesitás enviar tareas individuales, heterogéneas (distintas funciones o argumentos que no encajan en un iterable) o cuando necesitás control fino sobre cada tarea (por ejemplo, asignar callbacks de éxito o rutinas de manejo de errores individuales).
+
+¿Qué pasaría si la duración de las tareas fuera constante?
+Visualmente, imap y imap_unordered arrojarían exactamente el mismo resultado y en el mismo orden. Al tardar todas lo mismo y despacharse en orden, terminarían en orden, eliminando la ventaja de entrega asíncrona que destaca a imap_unordered.
+Ejercicio 3: Memoria compartida con Value y Array
+Preguntas:
+
+¿Qué pasa si quitás el with contador.get_lock():?
+Ocurre una condición de carrera (race condition). Al leer, sumar y escribir en el espacio de memoria, varios procesos interrumpen la operación de los otros. Por ejemplo, el Worker 1 lee el valor (10), el Worker 2 también lee (10), el Worker 1 escribe (11) y el Worker 2 también escribe (11). Se perdió un incremento. El número final será impredecible y considerablemente menor a 40000.
+
+¿Necesitarías un lock para el Array en este caso? ¿Por qué no?
+No se necesita un lock. Esto se debe a que la lógica del código divide el array en segmentos mutuamente excluyentes. Cada worker tiene un rango de índices asignado (ej. Worker 0 usa del 0 al 24, Worker 1 del 25 al 49). Como ningún worker intenta escribir en el mismo índice que otro, no hay posibilidad de colisión en memoria.
+
+Ejercicio 4: Manager para estructuras complejas
+Preguntas:
+
+¿En qué orden aparecen los items en la lista? ¿Por qué?
+Aparecen de manera aleatoria, basados estrictamente en el tiempo asignado por random.uniform(). El worker que reciba el tiempo de suspensión más corto será el primero en despertar e insertar su resultado en la lista compartida.
+
+¿Manager es más rápido o más lento que Value/Array? ¿Por qué?
+Es muchísimo más lento. Value y Array asignan bloques de memoria plana (nivel C) que los procesos comparten directamente. Manager, por otro lado, levanta un proceso servidor independiente en segundo plano. Cada vez que un worker quiere modificar el diccionario, usa comunicación inter-procesos (IPC, como Sockets o Pipes) para enviar un mensaje serializado (con pickle) al servidor, el servidor lo modifica, y devuelve una respuesta. Todo ese tráfico genera una enorme latencia.
+Ejercicio 7: Pipeline de procesos
+Preguntas:
+
+¿Qué pasa si una etapa es mucho más lenta que las otras?
+Se genera un cuello de botella. La cola (Queue) de entrada de la etapa lenta comenzará a llenarse indefinidamente (consumiendo muchísima memoria RAM). Por su parte, las etapas posteriores estarán hambrientas (starvation), perdiendo el tiempo ociosas porque no les llega información para procesar.
+
+¿Cómo escalarías la etapa lenta?
+Instanciando múltiples workers para esa etapa específica. En multiprocessing, varias instancias de Process pueden leer de la misma Queue de entrada de forma segura. Si la "etapa 2" es el cuello de botella, simplemente iniciás p2_a, p2_b y p2_c, pasándoles a los tres exactamente la misma cola de entrada y la misma cola de salida. El sistema balanceará automáticamente la carga.

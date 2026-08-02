@@ -1,0 +1,5 @@
+Línea 1: Este es el inicio.
+Línea 2: Todo marcha bien.
+Línea 3: Tenemos un PATO en la casa.
+Línea 4: Ya casi terminamos.
+Línea 5: Fin del texto.
