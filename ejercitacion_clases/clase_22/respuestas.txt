@@ -1,0 +1,22 @@
+CLASE 22 - concurrent.futures
+
+Ej 2 (map vs as_completed) - salida de ej2_map_as_completed.py (3 tareas de 0.6, 0.3 y 0.1 s en 3 workers):
+  map:          lenta 0.60s | media 0.60s | rapida 0.60s   total 0.60s   (entrega en orden de entrada)
+  as_completed: rapida 0.10s | media 0.30s | lenta 0.60s    total 0.60s   (entrega en orden de terminación)
+
+2. Con map, el resultado de `rapida` estuvo calculado a los 0.1 s pero recién disponible a los 0.6 s: map entrega en orden y
+   hay que esperar a que terminen las anteriores.
+3. El total es el mismo (0.60 s, lo que tarda la más lenta) porque las dos corren igual de concurrente: lo que cambia es CUÁNDO
+   se entrega cada resultado, no cuándo se calcula.
+4. map garantiza el ORDEN de los resultados (resultado i corresponde a la entrada i); as_completed no.
+5. 1000 URLs -> lista de códigos en el mismo orden: map (el orden importa).
+6. Barra de progreso: as_completed (avanza a medida que terminan).
+7. 50 imágenes guardadas apenas llegan: as_completed.
+8. Promedio de 100 números: map (el orden no importa pero es lo más simple; también sirve as_completed).
+9. Con as_completed sé de qué entrada era cada resultado con un diccionario {future: entrada}.
+10. Ver correspondencia(): reporta cuál falló (b y d) por la clave del diccionario.
+11. Un Future es hashable porque no define __eq__ propio: usa identidad (hash por id), y objetos con identidad estable sirven de clave.
+12. wait() devuelve dos conjuntos: (hechos, pendientes).
+13. FIRST_EXCEPTION: vuelve apenas falla uno (hechos=1, pendientes=2) sin esperar a los demás.
+14. Primera respuesta de tres servidores: wait(FIRST_COMPLETED); a los otros les hago cancel(), pero devuelve False porque ya estaban
+    corriendo (un Future en ejecución no se puede cancelar; el hilo sigue hasta terminar y su resultado se ignora).

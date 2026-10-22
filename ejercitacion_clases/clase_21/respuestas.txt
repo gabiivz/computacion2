@@ -1,0 +1,27 @@
+CLASE 21 - Asyncio avanzado
+
+Ej 3 (sacar el trabajo del loop) - salida de ej3_executor.py (hash SHA-256 iterado 1,5 M veces; máquina de 2 núcleos):
+  sin executor          trabajo=0.72s  peor atraso del loop=723 ms
+  ThreadPoolExecutor    trabajo=0.95s  peor atraso del loop= 11 ms
+  ProcessPoolExecutor   trabajo=0.65s  peor atraso del loop=  3 ms
+  CPU-bound x1: threads 0.30s | procesos 0.32s       CPU-bound x4: threads 1.63s | procesos 0.72s
+  I/O-bound (sleep 0.5) x4: threads 1.00s | procesos 1.00s (2 workers cada uno)
+  lambda al ProcessPool -> AttributeError: Can't get local object ... <lambda>
+  pasar un número 0.8 ms | pasar lista de 1M 56 ms | crear un pool nuevo + tarea mínima 27 ms
+
+2. Sin executor el loop se atrasa ~723 ms: durante ese tiempo el servidor no responde NADA (ni /tareas, ni nuevos clientes, ni timeouts).
+3. El trabajo tarda lo mismo, pero lo que mejora es la RESPUESTA del servidor: el loop queda libre para atender a los demás
+   mientras otro hilo/proceso hace el cálculo. No se hace más rápido; se hace sin bloquear a nadie.
+4. El medidor mide el atraso de un asyncio.sleep(0.01) porque ese sleep solo vuelve cuando el loop recupera el control: la
+   diferencia entre lo pedido y lo real es exactamente cuánto estuvo bloqueado.
+5-6. Con 4 tareas CPU-bound los procesos (0.72 s) ganan a los threads (1.63 s): el GIL (clase 10) deja ejecutar bytecode Python a un hilo
+     por vez, así que los threads no paralelizan CPU; los procesos tienen un intérprete (y GIL) cada uno. (Con 2 núcleos el techo es ~2x.)
+     Los threads incluso empeoran el atraso (11 ms): el hilo pesado compite por el GIL con el loop.
+7. Con una sola tarea empatan (0.30 vs 0.32): no hay nada con qué competir por el GIL, y el único hilo corre a plena velocidad.
+8. Con I/O-bound (sleep) los dos tardan igual (1.0 s con 2 workers): el GIL se libera mientras se espera, no hay diferencia.
+9. Una lambda no se puede enviar a otro proceso: se transmite con pickle y pickle serializa funciones POR NOMBRE (módulo.función);
+   las lambdas/funciones locales no tienen nombre importable.
+10. Los argumentos y resultados viajan por pickle: un número cuesta 0.8 ms, una lista de 1 millón 56 ms. Hay que pasar datos chicos.
+11. Crear un ProcessPool cuesta (27 ms con un pool de 2 aquí; más con más workers): conviene crearlo una vez (en el lifespan) y reutilizarlo.
+
+Ej 5 (esqueleto del TP2): es el punto de partida de tp2/ (ver tp2/README.md).

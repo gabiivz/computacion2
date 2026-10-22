@@ -1,0 +1,17 @@
+CLASE 18 - De yield a asyncio
+
+Ej 2 (scheduler) - salida de ej2_scheduler.py:
+A.1 Salen intercaladas: A1 B1 C1 A2 B2 B3 (round-robin; C termina primero porque tiene 1 paso).
+A.2 next() se llamó 9 veces: 6 pasos + 3 StopIteration (una por tarea que termina).
+A.3 Una tarea sin yield (generador sin ceder) corre entera de una vez y termina: no hay intercalado.
+B.4 Con la tarea egoísta (time.sleep, no cede) A y B quedan congeladas todo ese tiempo: el scheduler no recupera el control.
+B.5 Con threads (clase 10) no pasaría: la concurrencia es PREVENTIVA (el SO interrumpe un hilo y pasa a otro). Acá es
+    COOPERATIVA: nadie te quita la CPU, hay que cederla.
+B.6 La regla: "no bloquees el event loop" (clase 17): un event loop atiende todo en un hilo, y un solo bloqueo frena a todos.
+C.8 dormir() no puede usar time.sleep(): bloquearía a todo el scheduler (igual que el egoísta). En vez de eso cede un
+    "despertame a las X" y el scheduler decide a quién correr mientras tanto.
+C.9 Tres esperas de 0.15 s terminan en ~0.15 s, no 0.45 s: esperan a la vez, porque esperar no ocupa CPU.
+D.10 `yield from dormir(e)` delega al subgenerador: su yield (el pedido de tiempo) sube hasta el scheduler. Llamar
+     `dormir(e)` a secas solo crea un generador que nadie ejecuta.
+D.11 Sin yield from no hay error: crear un generador no ejecuta nada. Es el mismo bug que olvidarse el await en asyncio
+     (la corrutina se crea pero nunca corre; Python solo avisa con un RuntimeWarning al final).

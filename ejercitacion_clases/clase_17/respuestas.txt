@@ -1,0 +1,25 @@
+CLASE 17 - I/O multiplexing
+
+Ej 3 (comparar los tres) - salida de `python3 comparar.py` (microsegundos por llamada, 3 sockets activos):
+   conexiones     select       poll      epoll
+          100       6.3        1.7        0.6
+          500      33.9        7.6        0.7
+         1000     falla       22.9        0.6
+         2000     falla       92.0        0.7
+         5000     falla      214.9        0.6
+
+2. poll pasa de 1.7 a 214.9 us entre 100 y 5000 conexiones: ×126 (50 veces más conexiones -> 126 veces más tiempo).
+3. epoll se queda en ~0.6 us (×1): no depende del total, solo de los listos.
+4. select falla (ValueError) desde 1000: algún fd supera 1023 (FD_SETSIZE), aunque vigile pocos.
+5. En un servidor web casi todas las conexiones están ociosas (keep-alive, usuarios leyendo, etc.): solo unas pocas tienen datos.
+6. select/poll reciben la lista completa en cada llamada y el kernel la recorre entera: O(n). epoll registra los fds UNA
+   vez (epoll_ctl) y el kernel mantiene una lista de listos que epoll_wait devuelve: O(listos).
+7. Con ACTIVOS=500 y 1000/2000 conexiones: poll 33.2/92.9 us y epoll 49.3/51.8 us. La ventaja de epoll casi desaparece
+   (incluso pierde en 1000): cuando la mitad está lista, igual hay que atender a casi todos y el costo de recorrer el
+   total deja de ser desperdicio.
+8. `comparar.py 10 50 100`: select 1.5/3.5/6.5, poll 0.4/0.9/1.7, epoll ~0.5. Diferencias de unos microsegundos: no vale la pena.
+9. No tiene sentido complicarse con multiplexing con pocas conexiones (o poco trabajo por conexión): un thread por cliente
+   o secuencial alcanza (tabla de la clase 14).
+10. nginx usa un puñado de procesos con epoll: cada uno vigila miles de conexiones con costo O(listos) (~0.6 us con 5000
+    conexiones en mi medición). Un Apache clásico con un thread por cliente paga memoria de pila y cambios de contexto
+    por cada conexión, aunque esté ociosa; epoll solo paga por las que tienen datos.

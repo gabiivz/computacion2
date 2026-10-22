@@ -1,0 +1,18 @@
+CLASE 12 - Redes: fundamentos
+
+Ej 6 (TCP es un flujo) - salida de ej6_tcp_flujo.py:
+  TCP sin pausa   : [b'HOLACOMOESTAS']        <- tres send() llegaron fusionados en un solo recv()
+  TCP con pausa 1s: [b'HOLA', b'COMO', b'ESTAS']
+  UDP             : [b'HOLA', b'COMO', b'ESTAS']   <- tres sendto() = tres recvfrom()
+
+1. Llegaron juntos y no se distinguen los tres envíos.
+2. Con pausa llegan separados, pero no se puede confiar en eso: depende de timing, buffers y del algoritmo de Nagle.
+3. No es un bug de TCP. El contrato de TCP es entregar los bytes completos, sin pérdida y en orden; nunca
+   prometió conservar los límites de cada send(). Los "mensajes" son un invento de la aplicación.
+4. Dos formas de delimitar: (a) un delimitador (ej. '\n'): si el mensaje lo contiene hay que escaparlo;
+   (b) prefijo de longitud (ej. 4 bytes): no hay problema de contenido, pero hay que leer exacto n bytes.
+5. UDP: el recvfrom se ejecutó 3 veces, uno por datagrama.
+6. UDP es orientado a mensajes (cada datagrama es una unidad y puede perderse); TCP es un flujo de bytes
+   confiable y ordenado, sin noción de mensaje.
+7. UDP no tiene conexión: no hay handshake ni estado por cliente, así que no hay listen() ni accept();
+   el servidor solo hace bind() y recibe de cualquiera con recvfrom().

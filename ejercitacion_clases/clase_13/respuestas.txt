@@ -1,0 +1,21 @@
+CLASE 13 - Sockets TCP
+
+Ej 3 (framing) - ver ej3_framing.py, salida:
+  B todo junto     : [b'UNO', b'DOS', b'TRES']   (un solo sendall con 3 líneas -> 3 respuestas)
+  B byte por byte  : [b'HOLA']                    (la línea llega en 5 recv() y se arma bien)
+  C con \n adentro  : b'CON\nSALTO'                (con longitud el contenido es opaco)
+  C mensaje vacío  : b''
+  C en pedazos     : b'ABCDE'
+
+A.1/2: el servidor eco hizo menos recv() que sendall() del cliente: TCP fusionó los envíos. No viola el
+       contrato de TCP (garantiza bytes en orden y sin pérdida, no límites de mensaje).
+6. recv(n) devuelve HASTA n bytes (lo que haya disponible), no exactamente n; por eso recibir_exacto itera.
+7. Con delimitador, un '\n' dentro del mensaje lo parte en dos (habría que escaparlo); con longitud funciona.
+8. Mensaje de 0 bytes: válido (cabecera 0). Uno de 5 GB: no entra en 4 bytes sin signo con sentido práctico y
+   haría reservar memoria enorme; por eso pongo un tope (MAX_MSG) y rechazo mensajes más grandes.
+9. Tabla:                                   Delimitador | Longitud
+   Contenido binario arbitrario                 no*      |   sí      (*salvo que se escape)
+   Depurable con nc                             sí       |   no (hay bytes binarios en la cabecera)
+   Hay que saber el tamaño antes                no       |   sí
+10. HTTP usa delimitador (\r\n\r\n) para los headers, que son texto chico de tamaño desconocido, y
+    Content-Length para el cuerpo, que puede ser binario (imágenes) y entonces no se puede usar un delimitador.

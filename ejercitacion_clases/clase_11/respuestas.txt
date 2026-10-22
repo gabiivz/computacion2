@@ -1,0 +1,20 @@
+CLASE 11 - Sincronización
+
+Ej 1 (cuenta): sin lock el saldo final no coincide con depósitos-retiros realmente aplicados (race
+  condition: dos hilos leen el mismo saldo, ambos escriben y uno pisa al otro). Con Lock alrededor de
+  TODA la secuencia leer-modificar-escribir da siempre el valor correcto.
+
+Ej 5 (RW lock): Condition única + contador de escritores esperando (preferencia de escritores).
+  En la corrida: 5 lectores simultáneos como máximo, 0 violaciones (nunca hubo lectores durante una escritura).
+  Starvation: con la versión del enunciado (lectores solo esperan si hay escritor ACTIVO) una avalancha de
+  lectores puede dejar al escritor esperando para siempre; con writers_waiting los lectores nuevos ceden.
+  Costo: ahora los lectores podrían sufrir si llegaran escritores sin parar (se invierte el problema).
+
+Ej 7 (filósofos):
+  1. La Barrier no crea el bug: solo fuerza el entrelazado (los 5 con su tenedor izquierdo) que ya era posible.
+     Coffman que se cumplen: exclusión mutua, hold-and-wait, no-preemption y espera circular (las cuatro).
+  2. La jerarquía rompe la ESPERA CIRCULAR. El semáforo N-1 rompe también la espera circular, pero por otro
+     camino: con 4 compitiendo siempre queda un tenedor libre, así que alguien puede completar el par.
+  3. Que alguien coma menos que los demás no es deadlock (el sistema avanza) sino, en todo caso, starvation / injusticia.
+  Medición (3 comidas c/u): jerarquía 0.16 s, semáforo 0.20 s; el ingenuo se cuelga siempre con la barrera.
+  Sin la barrera el ingenuo casi nunca se cuelga: por eso los deadlocks son difíciles de testear.

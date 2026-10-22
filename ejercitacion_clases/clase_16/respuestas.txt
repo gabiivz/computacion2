@@ -1,0 +1,23 @@
+CLASE 16 - socketserver
+
+Ej 2 (mixins) - salida de ej2_mixins.py:
+  Bien MRO=['Bien','ThreadingMixIn','TCPServer','BaseServer']  process_request viene de ThreadingMixIn
+  Mal  MRO=['Mal','TCPServer','BaseServer','ThreadingMixIn']   process_request viene de BaseServer
+  Bien: 2 clientes lentos tardan 0.50 s (paralelo)  |  Mal: 1.00 s (secuencial)
+
+A.1 ThreadingMixIn redefine process_request (lanza un Thread por request); ese método es el que produce la concurrencia.
+A.2 BaseServer.process_request atiende en el mismo hilo (finish_request + shutdown_request); el mixin lo hace en un hilo nuevo.
+A.3 ForkingMixIn cosecha hijos en collect_children(), que llama a waitpid(WNOHANG) en cada request, en un bucle:
+    es el handler con bucle de la clase 14 pero metido en el framework, por eso no quedan zombies.
+A.4 ThreadingTCPServer casi no tiene código propio: es `class ThreadingTCPServer(ThreadingMixIn, TCPServer): pass`.
+B.5-6 Python resuelve los métodos siguiendo el MRO: con `Mal` TCPServer/BaseServer aparecen antes que el mixin, así que
+      su process_request tapa al del mixin.
+B.8 `Mal` no lanza ningún error: simplemente atiende en serie. Es peligroso porque pasa todos los tests con un solo
+    cliente y falla recién bajo carga.
+C.9-10 Con ForkingTCPServer cada request corre en un proceso hijo: el contador es una copia (fork, clase 4) y el padre no
+       ve los cambios -> todos los clientes ven 1.
+C.11 La herramienta es multiprocessing.Value (memoria compartida, clase 9): con Value los clientes ven 1..5.
+C.12 El Value debe crearse en el __init__ del servidor (antes de cualquier fork) para que padre e hijos compartan la
+     misma memoria; si se crea en el handler cada hijo tendría el suyo.
+D.13-14 Sin daemon_threads=True los hilos de los clientes no son daemon: al hacer Ctrl+C el proceso espera a que cada
+        cliente conectado termine y parece colgado. Con daemon_threads=True los hilos mueren junto con el servidor.

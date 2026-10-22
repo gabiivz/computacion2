@@ -1,0 +1,24 @@
+CLASE 14 - Servidores concurrentes
+
+Ej 3 (los tres descuidos del fork) - salida de ej3_fork.py (5 corridas por modo, 60 hijos que mueren a la vez):
+  sin_handler : recogidos=0   zombies=60 (las 5 veces)
+  sin_bucle   : recogidos=46..56  zombies=4..14   (distinto en cada corrida: bug intermitente)
+  con_bucle   : recogidos=60  zombies=0 (las 5 veces)
+  ign         : zombies=0 (SIG_IGN le dice al kernel que cosecha solo; no hay nadie que haga wait() en Python)
+
+Parte A (padre que no cierra conn):
+  2-3. El fd se cierra solo: al reasignar `conn` en cada vuelta del while, el socket anterior queda sin referencias,
+       CPython lo destruye (conteo de referencias) y su __del__ llama a close(). Por eso los fds no crecen.
+  4-5. Aun así el close() explícito es correcto: en C no hay recolector; si el padre guarda las conexiones en una
+       lista la referencia sobrevive; y en PyPy la recolección es diferida. Depender del refcount de CPython es
+       depender de un detalle de implementación.
+  8.   Tras el fork() existen DOS copias del descriptor (padre e hijo). La conexión TCP solo se cierra de verdad
+       cuando se cierran todas; por eso matar al hijo no cierra la conexión si el padre aún tiene su copia.
+
+Parte B: sin handler los hijos terminados quedan en estado Z (zombie, clase 4): ya terminaron pero el padre nunca
+  hizo wait(); ocupan una entrada en la tabla de procesos. En semanas se agotaría la tabla de PIDs.
+Parte C: SIGCHLD no se encola; si llegan varias juntas el proceso ve UNA. Un handler sin bucle recoge un solo hijo
+  por señal entregada, por eso falla de forma intermitente y solo bajo carga. WNOHANG hace que waitpid no bloquee
+  si no hay hijos terminados; sin él, el handler se colgaría esperando. En producción lo encontraría contando
+  zombies en el tiempo (ps/ /proc) bajo un test de carga con muchas desconexiones simultáneas.
+Parte D: con SIG_IGN no aparecen zombies; el kernel los cosecha al instante (a costa de no poder leer el exit status).

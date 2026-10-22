@@ -1,0 +1,20 @@
+CLASE 19 - HTTP y FastAPI
+
+Ej 3 (API con FastAPI) - ver api.py y probar_api.py (salida real):
+  GET /tareas/abc            -> 422 loc=['path','id'] "Input should be a valid integer..."
+  POST tipo=volar            -> 422 loc=['body','tipo'] "Input should be 'descargar', 'hashear' or 'esperar'"
+  POST prioridad=99          -> 422 loc=['body','prioridad'] "Input should be less than or equal to 5"
+  GET /tareas/999            -> 404 "Tarea 999 no existe"
+  POST #11 con 10 pendientes -> 503 + Retry-After: 5
+
+A.1 La documentación (/docs, Swagger UI) la genera FastAPI a partir de las rutas, los modelos Pydantic y las anotaciones de tipo.
+A.3 /openapi.json es la especificación OpenAPI de la API en JSON: rutas, parámetros, modelos y respuestas; /docs la dibuja.
+B.5 422 (Unprocessable Entity) = el pedido es sintácticamente válido pero los datos no cumplen el esquema (la ruta existe,
+    el dato no valida). 404 = el recurso pedido no existe (lo decido yo en la función, después de validar).
+B.6 `loc` dice DÓNDE falló: ['path','id'], ['body','tipo'], ['query','limite']... (parte del request + nombre del campo).
+B.7 La validación corre ANTES de mi función: si falla, la función ni se ejecuta (se ve con un print al inicio).
+C.10 Elegí 503 Service Unavailable + Retry-After: el problema es del servidor saturado, no del cliente. 429 sería un límite
+     por cliente (rate limiting), que es otra cosa (bonus 4 del TP2).
+D.11 Sin `: int` el id llega como str y "abc" ya no da 422 sino 404 (o un KeyError si no lo controlo): se pierde la validación.
+D.12 Con `prioridad: str` acepta cualquier texto, y los ge/le numéricos dejan de tener sentido.
+D.13 Cada anotación de tipo hace tres cosas: (1) valida el dato, (2) lo convierte al tipo, (3) documenta la API en /docs y openapi.json.

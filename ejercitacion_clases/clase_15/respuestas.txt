@@ -1,0 +1,21 @@
+CLASE 15 - UDP
+
+Ej 3 (protocolo confiable) - salida de ej3_udp_confiable.py (100 pedidos; la pérdida se aplica a pedido y respuesta):
+  pérdida 0.3  sin seq: envíos=208 trabajo del servidor=146 (duplicado)  | con seq: envíos=206 trabajo=100
+  pérdida 0.6  sin seq: envíos=655 trabajo del servidor=265 (duplicado)  | con seq: envíos=580 trabajo=100
+
+A.3 UDP no garantiza entrega, orden ni ausencia de duplicados: es "best effort" y el emisor no se entera de lo que se pierde.
+B.6 Timeout muy corto: se reintenta antes de que la respuesta pueda llegar (retransmisiones innecesarias y duplicados);
+    muy largo: la aplicación se queda esperando mucho tras cada pérdida. Hay que ajustarlo al RTT de la red.
+C.7 El cliente NO puede distinguir si se perdió su pedido o la respuesta: en ambos casos solo ve el silencio.
+C.8 Si se perdió la respuesta, el servidor ya trabajó y al reintentar trabaja de nuevo (ver 146 > 100 arriba).
+C.9 Con "transferir $100" el reintento transferiría dos o más veces: por eso las operaciones deben ser idempotentes
+    o deduplicarse con un identificador.
+D.10 El servidor guarda seq -> respuesta; ante un duplicado reenvía la guardada sin repetir el trabajo (100 = 100).
+D.11 El cliente descarta respuestas con otro seq: una respuesta demorada de un intento anterior podría confundirse con la
+     del pedido actual y devolver datos equivocados.
+E.13 Garantías de TCP que sigo sin tener: control de flujo, control de congestión, y entrega ordenada para varios
+     mensajes en vuelo (también ni fragmentación/reensamblado de mensajes grandes ni handshake/cierre ordenado).
+E.14 Conviene dejar de agregar confiabilidad y usar TCP cuando termino reimplementando ack, orden, ventana y congestión:
+     ya está resuelto, probado y optimizado en el kernel. UDP se justifica por baja latencia o tolerancia a pérdidas
+     (juegos, voz, DNS) o por mensajes chicos sueltos.

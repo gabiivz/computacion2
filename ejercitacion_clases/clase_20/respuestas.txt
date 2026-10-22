@@ -1,0 +1,24 @@
+CLASE 20 - Asyncio en red
+
+Ej 3 (concurrencia de clientes) - salida de ej3_descargas.py (servidor local con 0.3 s de latencia, httpx.AsyncClient):
+  10 secuenciales (for + await)         3.05s
+  10 concurrentes (gather)              0.32s     (speedup ~9.5x)
+  10 con Semaphore(3)                   1.22s
+  200 concurrentes sin semáforo         1.11s
+  10 con requests dentro de corrutinas  3.03s     <- bloquea el loop: vuelve a ser secuencial
+  wait_for(0.1s) con latencia 0.3s      -> las 5 lanzan TimeoutError
+  gather con una URL mala               -> lanza ConnectError; con return_exceptions=True devuelve [200,200,200,ConnectError,200,200,200]
+
+1. gather tarda lo que la más lenta (0.32 s) porque todas las esperas de red se solapan: mientras una espera, el loop atiende otras.
+2. El semáforo deja pasar 3 a la vez: 10 pedidos en tandas de 3 (4 tandas ~ 1.2 s): intermedio entre secuencial y total.
+3. Con wait_for(0.1) todas se cancelan: wait_for cancela la tarea interna (CancelledError dentro de bajar) y levanta TimeoutError afuera.
+5. El AsyncClient se crea una vez para reutilizar conexiones (keep-alive, clase 19) y compartir el pool; uno por descarga
+   paga handshake TCP (y TLS) cada vez y no limita nada.
+6. requests es bloqueante: cada get() congela el event loop hasta terminar, así que las "concurrentes" corren una tras otra (~3 s).
+8. Acotar evita: agotar file descriptors ("Too many open files", ulimit -n) y saturar al servidor remoto / ser bloqueado
+   (también memoria y puertos efímeros).
+9. Con 200 URLs sin semáforo, con ulimit -n 1024 se llega a "Too many open files" si superan los fds disponibles (acá ulimit es 20000).
+10-11. gather normal propaga la primera excepción y el resultado del resto se pierde (las demás siguen corriendo pero no las recibo);
+       con return_exceptions=True devuelvo una lista mezclada de resultados y excepciones.
+12. Para el TP2 quiero return_exceptions=True (o try/except dentro de cada descarga): `descargar` debe devolver estado/tamaño/tiempo
+    de cada URL y marcar cuáles fallaron, sin perder las que sí funcionaron.
