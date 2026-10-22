@@ -10,4 +10,8 @@ env/
 
 # Archivos de sistema operativo
 .DS_Store
-Thumbs.db
+Thumbs.db__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+estado_*.json
