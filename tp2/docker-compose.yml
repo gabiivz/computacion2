@@ -1,0 +1,15 @@
+services:
+  tareas:
+    build: .
+    container_name: tp2_tareas
+    ports:
+      - "8000:8000"          # la API queda accesible desde el host
+    environment:             # config.py lee estas variables (clase 2: environment); también hay flags --workers, etc.
+      - WORKERS=4
+      - COLA_MAX=1000
+      - TIMEOUT_DEFAULT=30
+      - APAGADO_TIMEOUT=10
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./datos:/app/datos   # los estado_<timestamp>.json sobreviven al contenedor (clase 2: volúmenes)
+    stop_grace_period: 20s   # docker stop manda SIGTERM y a los 10 s (por defecto) SIGKILL: tiene que ser > APAGADO_TIMEOUT
